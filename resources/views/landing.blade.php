@@ -9,14 +9,14 @@
 
     <div class="mt-10 flex justify-center gap-6 flex-wrap">
         <!-- Candidate Section -->
-        <div class="bg-white rounded-xl shadow-lg p-6 w-80">
+        <!-- <div class="bg-white rounded-xl shadow-lg p-6 w-80">
             <h2 class="text-xl font-semibold text-indigo-600">For Candidates</h2>
             <p class="text-sm mt-2 text-gray-600">Submit your resume and get an AI-evaluated task.</p>
             <a href="{{ url('/candidate/dashboard') }}"
                class="mt-4 inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">
                 Apply Now
             </a>
-        </div>
+        </div> -->
 
         <!-- Admin Section -->
         <div class="bg-white rounded-xl shadow-lg p-6 w-80">

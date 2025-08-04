@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CandidateController;
 use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\JobController;
+use App\Http\Controllers\TaskSubmissionController;
 
 // Landing & Static Pages
 Route::view('/', 'landing');
@@ -56,3 +57,22 @@ Route::post('/jobs/{slug}/apply', [CandidateController::class, 'store'])->name('
 Route::get('/candidate/dashboard', [CandidateController::class, 'dashboard'])->name('candidate.dashboard');
 
 Route::get('/download-resume/{id}', [CandidateController::class, 'downloadResume'])->name('candidates.downloadResume');
+
+
+Route::get('/candidate/submit-task', fn() => view('candidate.submit-task'))->name('submit.task.form');
+
+Route::post('/candidate/submit-task', [TaskSubmissionController::class, 'submit'])->name('submit.task');
+
+Route::get('/check-task-requirement/{candidate_id}', function ($candidate_id) {
+    $candidate = \App\Models\Candidate::find($candidate_id);
+
+    if (!$candidate) {
+        return response()->json(['exists' => false]);
+    }
+
+    return response()->json([
+        'exists' => true,
+        'has_task_id' => !is_null($candidate->task_id),
+        'job_role' => $candidate->job_role,
+    ]);
+});

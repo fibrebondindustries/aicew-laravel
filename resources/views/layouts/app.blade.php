@@ -10,13 +10,12 @@
 
     <header class="bg-white shadow py-4">
         <div class="max-w-6xl mx-auto px-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-indigo-600">Fibre Bond Industries</h1>
-            <nav class="space-x-4 text-sm text-gray-700">
-                <!-- <a href="/" class="hover:text-indigo-600">Home</a>
-                <a href="/apply" class="hover:text-indigo-600">Apply</a>
-                <a href="/admin/login" class="hover:text-indigo-600">Admin</a> -->
-            </nav>
+              <!-- Logo and Company Name -->
+        <div class="flex items-center space-x-3">
+            <img src="{{ asset('images/logo-1.png') }}" alt="Logo" class="h-10 w-auto">
         </div>
+        </div>
+        
     </header>
 
     <main class="max-w-6xl mx-auto px-4 py-12">

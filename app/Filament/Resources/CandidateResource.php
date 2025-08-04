@@ -60,10 +60,10 @@ class CandidateResource extends Resource
                 //             ->openable(),
                 //     ]),
 
-                Forms\Components\Section::make('AICEW Evaluation Results')
+                Forms\Components\Section::make('Resume Evaluation Results')
                     ->schema([
                         Forms\Components\TextInput::make('candidate_id')
-                            ->label('Candidate id')
+                            ->label('Candidate Id')
                             ->columnSpanFull(),
 
                         Forms\Components\TextInput::make('score')
@@ -73,6 +73,21 @@ class CandidateResource extends Resource
                             ->maxValue(10),
 
                         Forms\Components\Textarea::make('summary')
+                            ->rows(4)
+                            ->columnSpanFull(),
+  
+                      
+                    ])->collapsible(),
+                Forms\Components\Section::make('Task Evaluation Results')
+                    ->schema([
+
+                        Forms\Components\TextInput::make('task_score')
+                            ->numeric()
+                            ->step(0.1)
+                            ->minValue(0)
+                            ->maxValue(10),
+
+                        Forms\Components\Textarea::make('task_summary')
                             ->rows(4)
                             ->columnSpanFull(),
   
@@ -123,13 +138,21 @@ class CandidateResource extends Resource
                         default => null,
                     }),
 
+            Tables\Columns\TextColumn::make('experience')
+                ->label('Experience')
+                ->sortable()
+                ->searchable(),
+
              // inside your ->columns([]) array:
             Tables\Columns\TextColumn::make('created_at')
                 ->label('Applied On')
                 ->sortable()
                 ->formatStateUsing(fn ($state) => Carbon::parse($state)->timezone('Asia/Kolkata')->format('M j, Y H:i:s')),
 
+           
+
                  ])
+                 
             ->filters([
                 Tables\Filters\SelectFilter::make('job_id')
                     ->label('Job Role')

@@ -124,13 +124,13 @@ class JobResource extends Resource
                     ->disabled(), // prevents manual editing
 
 
-                Forms\Components\Section::make('Status')
-                    ->schema([
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Active Job Posting')
-                            ->default(true)
-                            ->helperText('Inactive jobs won\'t be visible to candidates'),
-                    ]),
+                // Forms\Components\Section::make('Status')
+                //     ->schema([
+                //         Forms\Components\Toggle::make('is_active')
+                //             ->label('Active Job Posting')
+                //             ->default(true)
+                //             ->helperText('Inactive jobs won\'t be visible to candidates'),
+                //     ]),
             ]);
     }
 
