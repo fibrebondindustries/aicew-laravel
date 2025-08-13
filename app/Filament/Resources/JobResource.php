@@ -244,6 +244,12 @@ class JobResource extends Resource
             ->defaultSort('created_at', 'desc');
     }
 
+      /** Hide from the Filament navigation */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
     public static function getRelations(): array
     {
         return [

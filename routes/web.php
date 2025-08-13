@@ -6,7 +6,7 @@ use App\Http\Controllers\CandidateController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\TaskSubmissionController;
 use App\Http\Controllers\BasicApplicationController;
-
+use App\Http\Controllers\ResumePromptController;
 
 /*
 |--------------------------------------------------------------------------
@@ -135,6 +135,11 @@ Route::get('/job-apply', [BasicApplicationController::class, 'create'])->name('b
 Route::post('/job-apply', [BasicApplicationController::class, 'store'])->name('basic-apply.store');
 Route::get('/job-apply/thanks/{id}', [BasicApplicationController::class, 'thankYou'])->name('basic-apply.thanks');
 
+
+// Resume Prompt (single textarea)
+Route::get('/resume/prompt', [ResumePromptController::class, 'create'])->name('resume.prompt.form');
+Route::post('/resume/prompt', [ResumePromptController::class, 'store'])->name('resume.prompt.store');
+Route::get('/resume/prompt/thanks/{id}', [ResumePromptController::class, 'thankYou'])->name('resume.prompt.thanks');
 
 
 

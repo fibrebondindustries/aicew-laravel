@@ -31,6 +31,14 @@
             <form action="{{ route('basic-apply.store') }}" method="POST" enctype="multipart/form-data" class="space-y-10">
                 @csrf
 
+                
+                @if(request('job_id'))
+                    <input type="hidden" name="job_id" value="{{ request('job_id') }}">
+                    <!-- <div class="rounded-md bg-blue-50 border border-blue-200 p-2 text-sm text-blue-800">
+                        Applying for <strong>{{ request('job_id') }}</strong>
+                    </div> -->
+                @endif
+
                 {{-- Personal Information --}}
                 <section>
                     <h2 class="text-base font-semibold text-gray-900">Personal Information</h2>

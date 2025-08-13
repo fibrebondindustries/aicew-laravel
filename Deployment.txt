@@ -5,16 +5,10 @@ sudo -u www php artisan migrate
 
 
 sudo -u www npm run build
-sudo -u www php artisan up
+
 
 
 php artisan storage:link
-
-composer install --optimize-autoloader --no-dev
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-
 
 quick fix
 
@@ -29,3 +23,19 @@ php artisan route:clear
 php artisan config:clear
 php artisan cache:clear
 php artisan view:clear
+
+sudo -u www php artisan up
+
+
+for Filament
+
+cd /www/wwwroot/careers.fibrebondindustries.com
+
+sudo -u www php artisan filament:clear
+sudo -u www php artisan optimize:clear
+sudo -u www php artisan route:clear
+sudo -u www php artisan config:clear
+sudo -u www php artisan cache:clear
+sudo -u www php artisan view:clear
+
+sudo -u www composer dump-autoload -o

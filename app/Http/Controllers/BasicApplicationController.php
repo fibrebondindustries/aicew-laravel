@@ -28,6 +28,7 @@ class BasicApplicationController extends Controller
             'notice_period'       => ['nullable','string','max:50'],
             'portfolio_link'      => ['nullable','url','max:255'],
             'resume'              => ['required','file','mimes:pdf,doc,docx','max:5120'], // 5 MB
+            'job_id'    => 'nullable|string|max:50',   // <-- accept job_id
         ]);
 
         $app = DB::transaction(function () use ($request, $validated) {
@@ -62,6 +63,7 @@ class BasicApplicationController extends Controller
                 'notice_period'        => $validated['notice_period'] ?? null,
                 'portfolio_link'       => $validated['portfolio_link'] ?? null,
                 'resume_path'          => $resumePath,
+                  'job_id'               => $validated['job_id'] ?? null, // <-- save if present
             ]);
         });
 
