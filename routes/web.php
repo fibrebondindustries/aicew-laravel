@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CandidateController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\TaskSubmissionController;
+use App\Http\Controllers\BasicApplicationController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -127,6 +129,21 @@ Route::get('/test-jobs', function () {
         echo "<p><strong>Test URL:</strong> <a href='{$url}' target='_blank'>{$url}</a></p><hr>";
     }
 });
+
+// Basic application form (separate from existing /apply and candidate routes)
+Route::get('/job-apply', [BasicApplicationController::class, 'create'])->name('basic-apply.form');
+Route::post('/job-apply', [BasicApplicationController::class, 'store'])->name('basic-apply.store');
+Route::get('/job-apply/thanks/{id}', [BasicApplicationController::class, 'thankYou'])->name('basic-apply.thanks');
+
+
+
+
+
+
+
+
+
+
 
 // use Illuminate\Support\Facades\Route;
 // use App\Http\Controllers\CandidateController;

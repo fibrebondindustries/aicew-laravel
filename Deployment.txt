@@ -1,0 +1,31 @@
+cd /www/wwwroot/careers.fibrebondindustries.com
+sudo -u www php artisan down
+
+sudo -u www php artisan migrate
+
+
+sudo -u www npm run build
+sudo -u www php artisan up
+
+
+php artisan storage:link
+
+composer install --optimize-autoloader --no-dev
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+
+quick fix
+
+cd /www/wwwroot/careers.fibrebondindustries.com
+sudo mkdir -p storage/framework/{cache,sessions,views}
+sudo chown -R www:www storage bootstrap/cache vendor
+sudo find storage -type d -exec chmod 775 {} \;
+sudo find storage -type f -exec chmod 664 {} \;
+sudo chmod -R 775 bootstrap/cache
+sudo -u www composer dump-autoload -o
+php artisan route:clear
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
