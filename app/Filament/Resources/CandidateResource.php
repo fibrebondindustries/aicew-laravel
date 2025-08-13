@@ -137,6 +137,23 @@ class CandidateResource extends Resource
                         $state >= 40 => 'heroicon-o-x-circle',
                         default => null,
                     }),
+                    
+               Tables\Columns\TextColumn::make('task_score')
+                    ->label('Task Score')
+                    ->sortable()
+                    ->color(fn (string $state): string => match (true) {
+                        $state >= 80 => 'success',
+                        $state >= 60 => 'warning',
+                        $state >= 40 => 'danger',
+                        default => 'gray',
+                    })
+                    ->icon(fn (string $state): ?string => match (true) {
+                        $state >= 80 => 'heroicon-o-check-circle',
+                        $state >= 60 => 'heroicon-o-exclamation-circle',
+                        $state >= 40 => 'heroicon-o-x-circle',
+                        default => null,
+                    }),
+
 
             Tables\Columns\TextColumn::make('experience')
                 ->label('Experience')

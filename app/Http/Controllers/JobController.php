@@ -6,6 +6,7 @@ use App\Models\Job;
 use App\Models\Candidate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http; // you use Http::attach later
 
 class JobController extends Controller
 {
@@ -15,15 +16,13 @@ class JobController extends Controller
         return view('jobs.index', compact('jobs'));
     }
 
-    // public function show($slug)
-    // {
-    //     $job = Job::where('slug', $slug)->active()->firstOrFail();
-
-    //     // Generate hidden candidate_id
-    //     $candidateId = 'CAND-' . strtoupper(Str::random(8));
-
-    //     return view('jobs.show', compact('job', 'candidateId'));
-    // }
+     public function show(string $slug)
+    {
+        // Use scopeActive() if you’ve defined it, otherwise filter by is_active
+        $job = Job::where('slug', $slug)->active()->firstOrFail();
+        $candidateId = 'CAND-' . strtoupper(Str::random(8)); // optional for your form
+        return view('jobs.show', compact('job', 'candidateId'));
+    }
 
     public function showByIndeedId($indeedJobId)
     {

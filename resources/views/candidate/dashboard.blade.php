@@ -10,19 +10,23 @@
     <p><strong>Email:</strong> {{ $candidate->email }}</p>
     <p><strong>Phone:</strong> {{ $candidate->phone }}</p>
     <p><strong>Experience:</strong> {{ $candidate->experience }} years</p>
-    <p><strong>Resume:</strong> 
+    <!-- <p><strong>Resume:</strong> 
         <a href="{{ asset('storage/' . $candidate->resume) }}" target="_blank" class="text-blue-600 underline">
             View Resume
         </a>
-    </p>
+    </p> -->
 
     <hr class="my-4">
 
-    <h3 class="text-xl font-semibold text-green-700 mb-2">AI Evaluation</h3>
+       <div class="mt-8 bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4 rounded">
+        <p class="font-semibold">📢 Note:</p>
+        <p>   If your profile matches our current requirements, our team will get back to you soon.</p>
+    </div>
+    <!-- <h3 class="text-xl font-semibold text-green-700 mb-2">AI Evaluation</h3>
     <p><strong>Score:</strong> {{ $candidate->score ?? 'N/A' }}</p>
     <p><strong>Summary:</strong></p>
     <div class="bg-gray-100 p-4 rounded mt-1 text-gray-800">
         {{ $candidate->summary ?? 'AI summary not available.' }}
-    </div>
+    </div> -->
 </div>
 @endsection

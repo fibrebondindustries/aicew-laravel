@@ -28,23 +28,30 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->authMiddleware([
+                  'web',
+                    Authenticate::class,
+                ]) // this must be on the panel level, not inside ->auth()
             ->brandName('AICEW Admin')
-            ->brandLogo(asset('images/logo.svg'))
-            ->brandLogoHeight('2rem')
+            // ->brandLogo(asset('images/logo.svg'))
+          ->brandLogo(new \Illuminate\Support\HtmlString(
+    '<img src="' . asset('images/Gold-logo.png') . '" alt="Fibre Bond Industries" style="width: 108px; height: 96px; margin-top: -36px; " />'
+))
+
+
+            // ->brandLogoHeight('2rem')
             ->colors([
                 'primary' => '#4338ca',
                 'gray' => Color::Slate,
             ])
             ->font('Inter')
             ->sidebarCollapsibleOnDesktop()
-            ->sidebarWidth('16rem')
+            ->sidebarWidth('19rem')
             ->sidebarFullyCollapsibleOnDesktop()
             ->navigationGroups([
                 'Job Management',
                 'Candidate Management',
-                'Evaluation System',
-                'Reports & Analytics',
-                'System Settings',
+             
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')

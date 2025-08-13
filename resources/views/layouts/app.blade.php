@@ -12,7 +12,7 @@
         <div class="max-w-6xl mx-auto px-4 flex justify-between items-center">
               <!-- Logo and Company Name -->
         <div class="flex items-center space-x-3">
-            <img src="{{ asset('images/logo-1.png') }}" alt="Logo" class="h-10 w-auto">
+            <img src="{{ asset('images/logo1.png') }}" alt="Logo" class="h-10 w-auto">
         </div>
         </div>
         

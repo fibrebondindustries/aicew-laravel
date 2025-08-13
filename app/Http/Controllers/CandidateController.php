@@ -8,7 +8,7 @@ use App\Models\Job;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Response;
-
+use Illuminate\Support\Facades\Log;
 
 class CandidateController extends Controller
 {
@@ -157,46 +157,144 @@ class CandidateController extends Controller
                 // $candidate->save(); // 💾 Update record
             }
             // ✅ Only fetch task if not Data Analyst
-             // Step 6: If NOT a Data Analyst, fetch task
-    if (strtolower($job->title) !== 'data analyst') {
-        $apiJobRoles = [
-            'laravel developer'     => 'laravel_developer',
-            'react developer'       => 'react_developer',
-            'full stack developer'  => 'full_stack_developer',
-        ];
+                // Step 6: If NOT a Data Analyst, fetch task
+        // if (strtolower($job->title) !== 'data analyst') {
+        //     $apiJobRoles = [
+        //         'laravel developer'     => 'laravel_developer',
+        //         'react developer'       => 'react_developer',
+        //         'full stack developer'  => 'full_stack_developer',
+        //     ];
 
-        $jobTitleKey = strtolower(trim($job->title));
-        $mappedJobRole = $apiJobRoles[$jobTitleKey] ?? null;
+        //     $jobTitleKey = strtolower(trim($job->title));
+        //     $mappedJobRole = $apiJobRoles[$jobTitleKey] ?? null;
 
-        if ($mappedJobRole) {
-            $taskResponse = Http::withOptions(['verify' => false])
-                ->post('https://aicew.fibrebondindustries.com/get-developer-task', [
-                    'experience' => $request->experience,
-                    'job_role'   => $mappedJobRole,
+        //     if ($mappedJobRole) {
+        //         $taskResponse = Http::withOptions(['verify' => false])
+        //             ->post('https://aicew.fibrebondindustries.com/get-developer-task', [
+        //                 'experience' => $request->experience,
+        //                 'job_role'   => $mappedJobRole,
+        //             ]);
+
+        //         if ($taskResponse->successful()) {
+        //             $taskData = $taskResponse->json();
+        //             logger($taskData); // For debugging only, remove in prod
+
+        //             $candidate->task_title       = $taskData['title'] ?? null;
+        //             $candidate->task_description = $taskData['description'] ?? null;
+        //             $candidate->expected_output  = $taskData['expected_output'] ?? null;
+        //             $candidate->task_id          = $taskData['task_id'] ?? null;
+
+        //               // ✅ Send task email
+        //         $sendTaskMailResponse = Http::withOptions(['verify' => false])
+        //             ->post('https://aicew.fibrebondindustries.com/send-task-mail', [
+        //                 'job_role'     => $job->title,
+        //                 'candidate_id' => $candidate->candidate_id,
+        //                 'email'        => $candidate->email,
+        //                 'task'         => $taskData,
+        //             ]);
+
+        //         if (!$sendTaskMailResponse->successful()) {
+        //             logger(['error' => 'Send task mail API failed', 'response' => $sendTaskMailResponse->body()]);
+        //         }
+        //         } else {
+        //             logger(['error' => 'Task API failed', 'response' => $taskResponse->body()]);
+        //         }
+        //         } else {
+        //             logger(['error' => 'Job role not found', 'title' => $job->title]);
+        //         }
+                
+        //         }
+        $taskData = null;
+
+            $apiJobRoles = [
+                'laravel developer'     => 'laravel_developer',
+                'react developer'       => 'react_developer',
+                'full stack developer'  => 'full_stack_developer',
+            ];
+
+            $jobTitleKey = strtolower(trim($job->title));
+            $mappedJobRole = $apiJobRoles[$jobTitleKey] ?? null;
+
+            // ✅ If mapped, fetch task from API
+            if ($mappedJobRole) {
+                $taskResponse = Http::withOptions(['verify' => false])
+                    ->post('https://aicew.fibrebondindustries.com/get-developer-task', [
+                        'experience' => $request->experience,
+                        'job_role'   => $mappedJobRole,
+                    ]); 
+
+                if ($taskResponse->successful()) {
+                    $taskData = $taskResponse->json();
+                    $candidate->task_title       = $taskData['title'] ?? null;
+                    $candidate->task_description = $taskData['description'] ?? null;
+                    $candidate->expected_output  = $taskData['expected_output'] ?? null;
+                    $candidate->task_id          = $taskData['task_id'] ?? null;
+                } else {
+                    logger(['error' => 'Task API failed', 'response' => $taskResponse->body()]);
+                }
+            }
+
+            // ✅ If no taskData (e.g., Data Analyst), fallback to empty task
+            if (!$taskData) {
+                $taskData = [
+                    'title' => 'No task assigned',
+                    'description' => 'No developer task applicable for this role.',
+                    'expected_output' => [],
+                    'task_id' => null,
+                    'input_files' => [],
+                ];
+            }
+
+            // // ✅ Always send task mail
+            // $sendTaskMailResponse = Http::withOptions(['verify' => false])
+            //     ->post('https://aicew.fibrebondindustries.com/send-task-mail', [
+            //         'job_role'     => $job->title,
+            //         'candidate_id' => $candidate->candidate_id,
+            //         'email'        => $candidate->email,
+            //         'task'         => $taskData,
+            //     ]);
+
+            // if (!$sendTaskMailResponse->successful()) {
+            //     logger(['error' => 'Send task mail API failed', 'response' => $sendTaskMailResponse->body()]);
+            // }
+            // ✅ Always send task mail and log the request + response
+            try {
+                Log::info('Triggering send-task-mail API', [
+                    'job_role'     => $job->title,
+                    'candidate_id' => $candidate->candidate_id,
+                    'email'        => $candidate->email,
+                    'task'         => $taskData,
                 ]);
 
-            if ($taskResponse->successful()) {
-                $taskData = $taskResponse->json();
-                logger($taskData); // For debugging only, remove in prod
+                $sendTaskMailResponse = Http::withOptions(['verify' => false])
+                    ->post('https://aicew.fibrebondindustries.com/send-task-mail', [
+                        'job_role'     => $job->title,
+                        'candidate_id' => $candidate->candidate_id,
+                        'email'        => $candidate->email,
+                        'task'         => $taskData,
+                    ]);
 
-                $candidate->task_title       = $taskData['title'] ?? null;
-                $candidate->task_description = $taskData['description'] ?? null;
-                $candidate->expected_output  = $taskData['expected_output'] ?? null;
-                $candidate->task_id          = $taskData['task_id'] ?? null;
-            } else {
-                logger(['error' => 'Task API failed', 'response' => $taskResponse->body()]);
-            }
-            } else {
-                logger(['error' => 'Job role not found', 'title' => $job->title]);
-            }
-            
+                if ($sendTaskMailResponse->successful()) {
+                    Log::info('✅ Email API succeeded', [
+                        'response' => $sendTaskMailResponse->json()
+                    ]);
+                } else {
+                    Log::error('❌ Email API failed', [
+                        'status'   => $sendTaskMailResponse->status(),
+                        'response' => $sendTaskMailResponse->body(),
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('❗ Exception while calling email API', [
+                    'message' => $e->getMessage()
+                ]);
             }
 
-            // 💾 Save candidate
-            $candidate->save();
+                // 💾 Save candidate
+                $candidate->save();
 
-            return redirect()->route('candidate.dashboard')->with('success', 'Application submitted successfully!');
-        }
+                return redirect()->route('candidate.dashboard')->with('success', 'Application submitted successfully!');
+            }
 
     public function dashboard()
         {

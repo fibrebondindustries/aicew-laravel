@@ -117,20 +117,20 @@ class JobResource extends Resource
                         if ($record && $record->slug) {
                             $baseUrl = app()->environment('local')
                                 ? 'http://127.0.0.1:8000/career/'
-                                : 'https://careers.fibrebondindustries.com/';
+                                : 'https://careers.fibrebondindustries.com/career/'; // <-- add /career/
                             $component->state($baseUrl . $record->slug);
                         }
                     })
                     ->disabled(), // prevents manual editing
 
 
-                // Forms\Components\Section::make('Status')
-                //     ->schema([
-                //         Forms\Components\Toggle::make('is_active')
-                //             ->label('Active Job Posting')
-                //             ->default(true)
-                //             ->helperText('Inactive jobs won\'t be visible to candidates'),
-                //     ]),
+                Forms\Components\Section::make('Status')
+                    ->schema([
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Active Job Posting')
+                            ->default(true)
+                            ->helperText('Inactive jobs won\'t be visible to candidates'),
+                    ]),
             ]);
     }
 
@@ -188,9 +188,9 @@ class JobResource extends Resource
                     ->formatStateUsing(fn ($state) => Carbon::parse($state)->timezone('Asia/Kolkata')->format('M j, Y H:i:s'))
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                // Tables\Columns\IconColumn::make('is_active')
-                //     ->boolean()
-                //     ->label('Active'),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->boolean()
+                    ->label('Active'),
       
                 
               
