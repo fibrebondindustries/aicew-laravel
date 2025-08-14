@@ -28,15 +28,28 @@
                 </div>
             @endif
 
-            <form action="{{ route('basic-apply.store') }}" method="POST" enctype="multipart/form-data" class="space-y-10">
+            <form action="{{ route('basic-apply.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
                 @csrf
 
-                
+              {{-- Show the Job Title (read-only) --}}
+                @if(!empty($jobId) && !empty($title))
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700">Applying for</label>
+                        <div class="mt-1 flex items-center gap-2">
+                            <input type="text" value="{{ $title }}" 
+                                class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
+                        </div>
+                    </div>
+                @endif
+
                 @if(request('job_id'))
                     <input type="hidden" name="job_id" value="{{ request('job_id') }}">
                     <!-- <div class="rounded-md bg-blue-50 border border-blue-200 p-2 text-sm text-blue-800">
                         Applying for <strong>{{ request('job_id') }}</strong>
                     </div> -->
+                @endif
+                @if(!empty($title))
+                <input type="hidden" name="job_role" value="{{ $title }}">
                 @endif
 
                 {{-- Personal Information --}}
