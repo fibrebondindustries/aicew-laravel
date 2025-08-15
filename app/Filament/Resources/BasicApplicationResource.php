@@ -14,6 +14,10 @@ use Carbon\Carbon;
 use Filament\Tables\Filters\Filter;
 use Illuminate\Database\Eloquent\Builder;
 
+use App\Http\Controllers\TaskMailController;
+use Filament\Notifications\Notification;
+
+
 class BasicApplicationResource extends Resource
 {
     protected static ?string $model            = BasicApplication::class;
@@ -184,6 +188,31 @@ Tables\Columns\TextColumn::make('ai_summary')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->visible(fn (BasicApplication $r) => filled($r->resume_path))
                     ->url(fn (BasicApplication $r) => Storage::url($r->resume_path), shouldOpenInNewTab: true),
+
+                    Tables\Actions\Action::make('send_task_mail')
+    ->label('Send Mail')
+    ->icon('heroicon-o-paper-airplane')
+    ->color('success')
+    ->requiresConfirmation()
+    ->visible(fn ($record) => filled($record->email) && filled($record->job_id))
+    ->action(function ($record) {
+        try {
+            $controller = app(TaskMailController::class);
+            $controller->sendByApplication($record); // direct controller call (no extra service)
+
+            Notification::make()
+                ->title('Email sent successfully.')
+                ->success()
+                ->send();
+        } catch (\Throwable $e) {
+            Notification::make()
+                ->title('Failed to send email.')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
+    }),
+    
                 Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([

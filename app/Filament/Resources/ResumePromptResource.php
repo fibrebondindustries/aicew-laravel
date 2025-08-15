@@ -11,7 +11,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-
+use Filament\Forms\Components\View as ViewComponent;
 
 class ResumePromptResource extends Resource
 {
@@ -79,6 +79,27 @@ public static function table(Table $table): Table
                 ->toggleable()
                 ->limit(80),
 
+                // Files count badge
+            // Tables\Columns\TextColumn::make('filesCount')
+            //     ->label('Files')
+            //     ->state(fn (ResumePrompt $record) => $record->filesCount())
+            //     ->badge()
+            //     ->color(fn ($state) => $state > 0 ? 'success' : 'gray'),
+
+                Tables\Columns\TextColumn::make('task_indicator')
+                    ->label('Files')
+                    ->state(function (ResumePrompt $r) {
+                        return $r->filesCount() > 0
+                            ? $r->filesCount()
+                            : (filled($r->task_link) ? 'Link' : 0);
+                    })
+                    ->badge()
+                    ->color(function (ResumePrompt $r) {
+                        return $r->filesCount() > 0
+                            ? 'success'
+                            : (filled($r->task_link) ? 'info' : 'gray');
+                    }),
+
                  // ▼ NEW: public apply URL built from job_id
             Tables\Columns\TextColumn::make('apply_url')
                 ->label('Apply URL')
@@ -130,6 +151,37 @@ public static function table(Table $table): Table
             ])
         ->actions([
             Tables\Actions\ViewAction::make(),
+              // Open a modal listing the files with links
+            // Tables\Actions\Action::make('view_files')
+            //     ->label('View Files')
+            //     ->icon('heroicon-o-paper-clip')
+            //     ->color('gray')
+            //      ->visible(fn (ResumePrompt $record) => $record->filesCount() > 0 || filled($record->task_link))
+            //     ->modalHeading(fn (ResumePrompt $record) => 'Files for ' . $record->job_id)
+            //     ->modalSubmitAction(false) // view-only
+            //    ->modalContent(fn (ResumePrompt $record) => view(
+            //         'components.resume-files-list',    
+            //         [
+            //             'files' => $record->fileItems(),
+            //             'link'  => $record->task_link, // Pass link to blade
+            //         ]
+            //     )),
+        Tables\Actions\Action::make('view_task')
+            ->label('View Task')
+            ->icon('heroicon-o-paper-clip')
+            ->color('gray')
+            // show when there are files OR a link
+            ->visible(fn (ResumePrompt $r) => $r->filesCount() > 0 || filled($r->task_link))
+            ->modalHeading(fn (ResumePrompt $r) => 'Task for ' . $r->job_id)
+            ->modalSubmitAction(false)
+            ->modalContent(fn (ResumePrompt $r) => view(
+                 'components.task-view',
+                [
+                    'files' => $r->fileItems(),   // may be []
+                    'link'  => $r->task_link,     // ← pass the link to the view
+                ]
+                )),
+
         Tables\Actions\Action::make('applications')
             ->label('Applications')
             ->icon('heroicon-o-users')

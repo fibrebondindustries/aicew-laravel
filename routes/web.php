@@ -7,6 +7,8 @@ use App\Http\Controllers\JobController;
 use App\Http\Controllers\TaskSubmissionController;
 use App\Http\Controllers\BasicApplicationController;
 use App\Http\Controllers\ResumePromptController;
+use App\Http\Controllers\TaskUploadController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -141,7 +143,10 @@ Route::get('/resume/prompt', [ResumePromptController::class, 'create'])->name('r
 Route::post('/resume/prompt', [ResumePromptController::class, 'store'])->name('resume.prompt.store');
 Route::get('/resume/prompt/thanks/{id}', [ResumePromptController::class, 'thankYou'])->name('resume.prompt.thanks');
 
-
+//task upload routes
+Route::get('/tasks/upload', [TaskUploadController::class, 'create'])->name('tasks.upload.form');
+Route::post('/tasks/upload', [TaskUploadController::class, 'store'])->name('tasks.upload.store');
+Route::get('/tasks/download/{id}', [TaskUploadController::class, 'download'])->name('tasks.upload.download');
 
 
 
