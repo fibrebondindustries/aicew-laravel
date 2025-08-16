@@ -86,19 +86,19 @@ public static function table(Table $table): Table
             //     ->badge()
             //     ->color(fn ($state) => $state > 0 ? 'success' : 'gray'),
 
-                Tables\Columns\TextColumn::make('task_indicator')
-                    ->label('Files')
-                    ->state(function (ResumePrompt $r) {
-                        return $r->filesCount() > 0
-                            ? $r->filesCount()
-                            : (filled($r->task_link) ? 'Link' : 0);
-                    })
-                    ->badge()
-                    ->color(function (ResumePrompt $r) {
-                        return $r->filesCount() > 0
-                            ? 'success'
-                            : (filled($r->task_link) ? 'info' : 'gray');
-                    }),
+                // Tables\Columns\TextColumn::make('task_indicator')
+                //     ->label('Files')
+                //     ->state(function (ResumePrompt $r) {
+                //         return $r->filesCount() > 0
+                //             ? $r->filesCount()
+                //             : (filled($r->task_link) ? 'Link' : 0);
+                //     })
+                //     ->badge()
+                //     ->color(function (ResumePrompt $r) {
+                //         return $r->filesCount() > 0
+                //             ? 'success'
+                //             : (filled($r->task_link) ? 'info' : 'gray');
+                //     }),
 
                  // ▼ NEW: public apply URL built from job_id
             Tables\Columns\TextColumn::make('apply_url')
@@ -167,7 +167,7 @@ public static function table(Table $table): Table
             //         ]
             //     )),
         Tables\Actions\Action::make('view_task')
-            ->label('View Task')
+            ->label('View Task Link')
             ->icon('heroicon-o-paper-clip')
             ->color('gray')
             // show when there are files OR a link

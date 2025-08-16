@@ -41,31 +41,17 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Task Link (optional)</label>
+                    <label class="block text-sm font-medium text-gray-700">Task Link</label>
                     <input type="url" name="task_link"
                         value="{{ old('task_link') }}"
                         placeholder="https://example.com/task-info"
                         class="block w-full rounded-md border-gray-300">
                     @error('task_link') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                    <p class="mt-1 text-xs text-gray-500">You may upload files OR provide a link (or both).</p>
+                    <!-- <p class="mt-1 text-xs text-gray-500">You may upload files OR provide a link (or both).</p> -->
                 </div>
 
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Task Files (multiple allowed)</label>
-                    <input id="task_files" type="file" name="task_files[]" multiple
-                           accept=".pdf,.doc,.docx,.csv,.xlsx"
-                           class="block w-full border-gray-300 rounded-md">
-                    @error('task_files') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                    @error('task_files.*') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-
-                    <!-- Preview box -->
-                    <div id="file_preview"
-                         class="mt-3 hidden rounded-xl border border-gray-200 bg-gray-50 p-3">
-                        <div class="text-sm font-medium text-gray-700 mb-2">Selected files</div>
-                        <ul id="file_list" class="text-sm text-gray-700 space-y-1 list-disc pl-5"></ul>
-                    </div>
-                </div>
+               
 
                 <div class="flex justify-end">
                     <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">

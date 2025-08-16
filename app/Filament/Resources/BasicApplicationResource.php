@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 use App\Http\Controllers\TaskMailController;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Collection;
 
 
 class BasicApplicationResource extends Resource
@@ -183,41 +184,76 @@ Tables\Columns\TextColumn::make('ai_summary')
 
             ])
             ->actions([
-                Tables\Actions\Action::make('download_resume')
-                    ->label('Resume')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->visible(fn (BasicApplication $r) => filled($r->resume_path))
-                    ->url(fn (BasicApplication $r) => Storage::url($r->resume_path), shouldOpenInNewTab: true),
+        Tables\Actions\Action::make('download_resume')
+            ->label('Resume')
+            ->icon('heroicon-o-arrow-down-tray')
+            ->visible(fn (BasicApplication $r) => filled($r->resume_path))
+            ->url(fn (BasicApplication $r) => Storage::url($r->resume_path), shouldOpenInNewTab: true),
 
-                    Tables\Actions\Action::make('send_task_mail')
-    ->label('Send Mail')
-    ->icon('heroicon-o-paper-airplane')
-    ->color('success')
-    ->requiresConfirmation()
-    ->visible(fn ($record) => filled($record->email) && filled($record->job_id))
-    ->action(function ($record) {
-        try {
-            $controller = app(TaskMailController::class);
-            $controller->sendByApplication($record); // direct controller call (no extra service)
+            Tables\Actions\Action::make('send_task_mail')
+                ->label('Send Mail')
+                ->icon('heroicon-o-paper-airplane')
+                ->color('success')
+                ->requiresConfirmation()
+                ->visible(fn ($record) => filled($record->email) && filled($record->job_id))
+                ->action(function ($record) {
+                    try {
+                        $controller = app(TaskMailController::class);
+                        $controller->sendByApplication($record); // direct controller call (no extra service)
 
-            Notification::make()
-                ->title('Email sent successfully.')
-                ->success()
-                ->send();
-        } catch (\Throwable $e) {
-            Notification::make()
-                ->title('Failed to send email.')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
-        }
-    }),
-    
-                Tables\Actions\ViewAction::make(),
+                        Notification::make()
+                            ->title('Email sent successfully.')
+                            ->success()
+                            ->send();
+                    } catch (\Throwable $e) {
+                        Notification::make()
+                            ->title('Failed to send email.')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
+                
+         Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->visible(false),
+
+                     // (NEW) Bulk Send Mail
+        Tables\Actions\BulkAction::make('send_task_mail_bulk')
+            ->label('Send Mail')
+            ->icon('heroicon-o-paper-airplane')
+            ->color('success')
+            ->requiresConfirmation()
+            ->deselectRecordsAfterCompletion()
+            ->action(function (Collection $records): void {
+                $sent  = 0;
+                $failed = 0;
+
+                /** @var \App\Http\Controllers\TaskMailController $controller */
+                $controller = app(TaskMailController::class);
+
+                foreach ($records as $record) {
+                    try {
+                        $controller->sendByApplication($record);
+                        $sent++;
+                    } catch (\Throwable $e) {
+                        $failed++;
+                        \Log::warning('Bulk send failed', [
+                            'application_id' => $record->id,
+                            'message'        => $e->getMessage(),
+                        ]);
+                    }
+                }
+
+                Notification::make()
+                    ->title('Bulk email completed')
+                    ->body("Sent: {$sent}, Failed: {$failed}")
+                    ->{ $failed ? 'warning' : 'success' }()
+                    ->send();
+            }),
+            
+                  Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
