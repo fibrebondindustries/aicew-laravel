@@ -12,6 +12,8 @@ use Filament\Tables\Table;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\View as ViewComponent;
+use App\Models\BasicApplication;
+
 
 class ResumePromptResource extends Resource
 {
@@ -60,6 +62,30 @@ class ResumePromptResource extends Resource
 public static function table(Table $table): Table
 {
     return $table
+     ->modifyQueryUsing(function (Builder $query) {
+            $resumeTbl = (new \App\Models\ResumePrompt)->getTable();
+            $appsTbl   = (new \App\Models\BasicApplication)->getTable();
+
+            $query->addSelect([
+                // Total applications per job_id
+                'total_apps' => BasicApplication::query()
+                    ->selectRaw('COUNT(*)')
+                    ->whereColumn("{$appsTbl}.job_id", "{$resumeTbl}.job_id"),
+
+                // Shortlisted 80–89.9999 per job_id
+                'shortlisted_count' => BasicApplication::query()
+                    ->selectRaw('COUNT(*)')
+                    ->whereColumn("{$appsTbl}.job_id", "{$resumeTbl}.job_id")
+                    ->whereNotNull("{$appsTbl}.ai_score")
+                    ->whereBetween("{$appsTbl}.ai_score", [80, 89.9999]),
+
+                // Highly recommended >= 90 per job_id
+                'highly_count' => BasicApplication::query()
+                    ->selectRaw('COUNT(*)')
+                    ->whereColumn("{$appsTbl}.job_id", "{$resumeTbl}.job_id")
+                    ->where("{$appsTbl}.ai_score", '>=', 90),
+            ]);
+        })
         ->columns([
             Tables\Columns\TextColumn::make('job_id')
                 ->label('Job ID')
@@ -67,6 +93,38 @@ public static function table(Table $table): Table
                 ->searchable()
                 ->copyable()
                 ->copyMessage('Job ID copied'),
+              // ▼ NEW: counts per job_id
+         Tables\Columns\TextColumn::make('total_apps')
+                ->label('Total Apps')
+                ->badge()
+                ->color(fn ($state) => $state > 0 ? 'info' : 'gray')
+                ->url(fn ($record) => route(
+                    'filament.admin.resources.basic-applications.index',
+                    ['tableFilters[job_id][value]' => $record->job_id]
+                ))
+                // ->openUrlInNewTab()
+                ->alignCenter(),
+
+
+            Tables\Columns\TextColumn::make('shortlisted_count')
+                ->label('Shortlisted')
+                ->badge()
+                ->color(fn ($state) => $state > 0 ? 'warning' : 'gray')
+                  ->url(fn ($record) => route(
+                    'filament.admin.resources.basic-applications.index',
+                    ['tableFilters[job_id][value]' => $record->job_id]
+                ))
+                ->alignCenter(),
+
+            Tables\Columns\TextColumn::make('highly_count')
+                ->label('Highly Rec.')
+                ->badge()
+                ->color(fn ($state) => $state > 0 ? 'success' : 'gray')
+                  ->url(fn ($record) => route(
+                    'filament.admin.resources.basic-applications.index',
+                    ['tableFilters[job_id][value]' => $record->job_id]
+                ))
+                ->alignCenter(),    
 
             Tables\Columns\TextColumn::make('title')
                ->label('Job Role')

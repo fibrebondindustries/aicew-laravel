@@ -8,6 +8,8 @@
         : rtrim(env('FRONTEND_URL', config('app.url')), '/');
 
     $applyUrl = $base . '/job-apply?job_id=' . $record->job_id;
+    //Task upload link (static endpoint)
+    $taskUploadUrl = $base . '/tasks/upload';
 @endphp
 
 <div class="flex items-center justify-center min-h-[70vh] px-4">
@@ -54,7 +56,24 @@
                     </svg>
                 </button>
             </div>
-
+    {{-- Task Upload URL --}}
+        <div class="mt-8 space-y-2">
+            <p class="text-gray-600">Upload task Link for this job here:</p>
+            <div class="flex items-center justify-center gap-3">
+                <a href="{{ $taskUploadUrl }}" target="_blank" class="underline text-indigo-600 hover:text-indigo-700 break-all">
+                    {{ $taskUploadUrl }}
+                </a>
+              
+                 <button onclick="copyText(`{{ $taskUploadUrl }}`)" class="p-1 text-gray-500 hover:text-gray-700" title="Copy apply URL">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                         viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                         class="lucide lucide-copy">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                </button>
+            </div>
          
         </div>
 

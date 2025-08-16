@@ -181,6 +181,48 @@ Tables\Columns\TextColumn::make('ai_summary')
                             ? $query->where('job_id', $data['value'])
                             : $query
                     ),
+              Filter::make('evaluation')
+    ->label('Status')
+    ->form([
+        Forms\Components\Select::make('values')   // <-- was 'value'
+            ->label('Status')
+            ->multiple()                          // <-- allow multi select
+            ->native(false)
+            ->options([
+                'shortlisted' => 'Shortlisted (80–89)',
+                'highly'      => 'Highly recommended (90+)',
+                'not'         => 'Not shortlisted',
+            ])
+            ->placeholder('Choose…'),
+    ])
+    ->query(function (Builder $query, array $data) {
+        $vals = array_filter((array) ($data['values'] ?? []));
+        if (empty($vals)) {
+            return $query;
+        }
+
+        // OR-match any selected statuses
+        return $query->where(function (Builder $q) use ($vals) {
+            if (in_array('shortlisted', $vals, true)) {
+                $q->orWhere(function (Builder $qq) {
+                    $qq->whereNotNull('ai_score')
+                       ->whereBetween('ai_score', [80, 89.9999]);
+                });
+            }
+
+            if (in_array('highly', $vals, true)) {
+                $q->orWhere('ai_score', '>=', 90);
+            }
+
+            if (in_array('not', $vals, true)) {
+                $q->orWhere(function (Builder $qq) {
+                    $qq->whereNull('ai_score')
+                       ->orWhere('ai_score', '<', 80);
+                });
+            }
+        });
+    }),
+  
 
             ])
             ->actions([
@@ -220,38 +262,90 @@ Tables\Columns\TextColumn::make('ai_summary')
                 Tables\Actions\BulkActionGroup::make([
 
                      // (NEW) Bulk Send Mail
-        Tables\Actions\BulkAction::make('send_task_mail_bulk')
-            ->label('Send Mail')
-            ->icon('heroicon-o-paper-airplane')
-            ->color('success')
-            ->requiresConfirmation()
-            ->deselectRecordsAfterCompletion()
-            ->action(function (Collection $records): void {
-                $sent  = 0;
-                $failed = 0;
+                     Tables\Actions\BulkAction::make('send_task_mail_bulk')
+    ->label('Send Mail')
+    ->icon('heroicon-o-paper-airplane')
+    ->color('success')
+    ->requiresConfirmation()
+    ->deselectRecordsAfterCompletion()
+    // Show only when Status filter is Shortlisted or Highly recommended
+    ->visible(fn () => true) 
+    ->action(function (\Illuminate\Support\Collection $records): void {
+    $controller = app(\App\Http\Controllers\TaskMailController::class);
 
-                /** @var \App\Http\Controllers\TaskMailController $controller */
-                $controller = app(TaskMailController::class);
+    $sent = 0;
+    $failed = 0;
+    $skipped = 0;
 
-                foreach ($records as $record) {
-                    try {
-                        $controller->sendByApplication($record);
-                        $sent++;
-                    } catch (\Throwable $e) {
-                        $failed++;
-                        \Log::warning('Bulk send failed', [
-                            'application_id' => $record->id,
-                            'message'        => $e->getMessage(),
-                        ]);
-                    }
-                }
+    foreach ($records as $record) {
+        // Eligible: has email + job_id + score >= 80 (Shortlisted or Highly)
+        $eligible = filled($record->email)
+            && filled($record->job_id)
+            && !is_null($record->ai_score)
+            && $record->ai_score >= 80;
 
-                Notification::make()
-                    ->title('Bulk email completed')
-                    ->body("Sent: {$sent}, Failed: {$failed}")
-                    ->{ $failed ? 'warning' : 'success' }()
-                    ->send();
-            }),
+        if (! $eligible) {
+            $skipped++;
+            continue;
+        }
+
+        try {
+            $controller->sendByApplication($record);
+            $sent++;
+        } catch (\Throwable $e) {
+            $failed++;
+            \Log::warning('Bulk send failed', [
+                'application_id' => $record->id,
+                'message'        => $e->getMessage(),
+            ]);
+        }
+    }
+
+    $note = "Sent: {$sent}, Failed: {$failed}";
+    if ($skipped > 0) {
+        $note .= ", Skipped: {$skipped}";
+    }
+
+    \Filament\Notifications\Notification::make()
+        ->title('Bulk email completed')
+        ->body($note)
+        ->{ $failed ? 'warning' : 'success' }()
+        ->send();
+}),
+
+
+        // Tables\Actions\BulkAction::make('send_task_mail_bulk')
+        //     ->label('Send Mail')
+        //     ->icon('heroicon-o-paper-airplane')
+        //     ->color('success')
+        //     ->requiresConfirmation()
+        //     ->deselectRecordsAfterCompletion()
+        //     ->action(function (Collection $records): void {
+        //         $sent  = 0;
+        //         $failed = 0;
+
+        //         /** @var \App\Http\Controllers\TaskMailController $controller */
+        //         $controller = app(TaskMailController::class);
+
+        //         foreach ($records as $record) {
+        //             try {
+        //                 $controller->sendByApplication($record);
+        //                 $sent++;
+        //             } catch (\Throwable $e) {
+        //                 $failed++;
+        //                 \Log::warning('Bulk send failed', [
+        //                     'application_id' => $record->id,
+        //                     'message'        => $e->getMessage(),
+        //                 ]);
+        //             }
+        //         }
+
+        //         Notification::make()
+        //             ->title('Bulk email completed')
+        //             ->body("Sent: {$sent}, Failed: {$failed}")
+        //             ->{ $failed ? 'warning' : 'success' }()
+        //             ->send();
+        //     }),
             
                   Tables\Actions\DeleteBulkAction::make(),
                 ]),
