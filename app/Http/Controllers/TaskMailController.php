@@ -88,6 +88,11 @@ class TaskMailController extends Controller
                 }
             }
 
+              // Build submission link (env-aware)
+            $submissionLink = app()->environment('local')
+                ? 'http://127.0.0.1:8000/candidate/submit-task'
+                : rtrim(env('FRONTEND_URL', config('app.url')), '/') . '/candidate/submit-task';
+
             // Build payload
             $payload = [
                 'email'        => (string) $application->email,
@@ -95,12 +100,15 @@ class TaskMailController extends Controller
                 'candidate_id' => (string) ($application->candidate_id ?? ''),
                 'input_files'  => $inputFiles,
                 'link'         => $rp?->task_link ?: null,
+                'submission_link'  => $submissionLink,            // NEW: candidate task submission page
             ];
 
             Log::info('[TASK_MAIL] Final payload preview', [
                 'endpoint'    => config('services.task_mail.url', 'https://aicew.fibrebondindustries.com/send-task-mail'),
                 'input_files' => $inputFiles,
                 'link'        => $payload['link'],
+                'submission_link'  => $submissionLink,
+
             ]);
 
             // Send to API
@@ -120,6 +128,8 @@ class TaskMailController extends Controller
             ]);
 
             if ($response->successful()) {
+                // Mark mail as sent
+                $application->update(['mail_sent' => true]);
                 Log::info('[TASK_MAIL] Done OK');
                 return ['ok' => true, 'payload' => $payload, 'data' => $response->json()];
             }

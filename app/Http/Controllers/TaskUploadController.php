@@ -22,6 +22,11 @@ public function store(Request $request)
 {
     $request->validate([
         'job_id'       => ['required', 'string'],
+
+        // NEW: mode selector; prompt stays optional
+        'task_mode'     => ['required', 'in:ai,manual'],
+        'task_prompt'        => ['nullable', 'string'],
+
         'task_files'     => ['nullable', 'array'],
         'task_files.*' => ['file', 'mimes:pdf,doc,docx,csv,xlsx', 'max:20480'],
          'task_link'      => ['nullable', 'url'],             
@@ -60,6 +65,15 @@ public function store(Request $request)
         $rp->task_file_size = json_encode([]);
     }
 
+      // ✅ NEW: store mode and prompt (prompt is optional)
+        $rp->task_mode = in_array($request->task_mode, ['ai', 'manual'], true)
+            ? $request->task_mode
+            : ($rp->task_mode ?? 'manual');
+
+        if ($request->filled('task_prompt')) {
+            $rp->task_prompt = $request->task_prompt;
+        }
+
     // Decode existing arrays (tolerate legacy CSV if any)
     $paths = $this->toArray($rp->task_file_path);
     $names = $this->toArray($rp->task_file_name);
@@ -90,19 +104,66 @@ public function store(Request $request)
 /**
  * Helper: robustly convert stored value to array (supports JSON or legacy CSV).
  */
+// private function toArray($value): array
+// {
+//     if (empty($value)) return [];
+//     $decoded = json_decode($value, true);
+//     if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+//         return $decoded;
+//     }
+//     // fallback if old data was comma/pipe separated
+//     if (is_string($value)) {
+//         // try pipe first, then comma
+//         if (str_contains($value, '|')) return array_filter(explode('|', $value), 'strlen');
+//         if (str_contains($value, ',')) return array_filter(explode(',', $value), 'strlen');
+//     }
+//     return [];
+// }
+
+
+// TaskUploadController.php
+
+/**
+ * Helper: normalize any stored value to an array.
+ * Accepts: already-an-array, JSON string, CSV (| or ,), single string, or null.
+ */
 private function toArray($value): array
 {
-    if (empty($value)) return [];
-    $decoded = json_decode($value, true);
-    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-        return $decoded;
+    // Already an array (because of model casts)
+    if (is_array($value)) {
+        return array_values($value);
     }
-    // fallback if old data was comma/pipe separated
+
+    // Null / empty
+    if ($value === null || $value === '' ) {
+        return [];
+    }
+
+    // Strings: try JSON first
     if (is_string($value)) {
-        // try pipe first, then comma
-        if (str_contains($value, '|')) return array_filter(explode('|', $value), 'strlen');
-        if (str_contains($value, ',')) return array_filter(explode(',', $value), 'strlen');
+        $trimmed = trim($value);
+        if ($trimmed === '') {
+            return [];
+        }
+
+        $decoded = json_decode($trimmed, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return is_array($decoded) ? array_values($decoded) : [$decoded];
+        }
+
+        // CSV fallbacks
+        if (str_contains($trimmed, '|')) {
+            return array_values(array_filter(explode('|', $trimmed), 'strlen'));
+        }
+        if (str_contains($trimmed, ',')) {
+            return array_values(array_filter(explode(',', $trimmed), 'strlen'));
+        }
+
+        // Plain single string
+        return [$trimmed];
     }
+
+    // Anything else → empty
     return [];
 }
 

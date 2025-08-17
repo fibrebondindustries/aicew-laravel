@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class ResumePrompt extends Model
 {
     protected $fillable = ['job_id', 'title', 'prompt', 'is_active', 'task_file_path',
-                                'task_file_name','task_file_mime','task_file_size', 'task_link',];
+                                'task_file_name','task_file_mime','task_file_size', 'task_link', 'task_mode',
+                                'task_prompt',];
 
      protected $casts = [
         'is_active' => 'boolean',

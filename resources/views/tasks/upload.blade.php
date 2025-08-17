@@ -28,33 +28,52 @@
             <form action="{{ route('tasks.upload.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                 @csrf
 
+                {{-- Job --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Job</label>
-                    <select name="job_id" required class="block w-full border-gray-300 rounded-md">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Job</label>
+                    <select name="job_id" required
+                        class="block w-full rounded-md border border-gray-400 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="">-- Select Job --</option>
                         @foreach ($jobs as $job)
-                            {{-- job_id is a string like JOB7 --}}
                             <option value="{{ $job->job_id }}" @selected(old('job_id') === $job->job_id)>
                                 #{{ $job->job_id }} — {{ $job->title }}
                             </option>
                         @endforeach
                     </select>
                 </div>
+
+                {{-- Task Mode --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Task Link</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Task Mode</label>
+                    <select name="task_mode" id="task_mode" required
+                        class="block w-full rounded-md border border-gray-400 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="ai" @selected(old('task_mode','ai') === 'ai')>AI evaluate</option>
+                        <option value="manual" @selected(old('task_mode') === 'manual')>Manual evaluate</option>
+                    </select>
+                </div>
+
+                {{-- Prompt (optional) --}}
+                <div id="prompt_wrap" class="@if(old('task_mode','ai') !== 'ai') hidden @endif">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Prompt (optional)</label>
+                    <textarea name="task_prompt" rows="6"
+                        class="block w-full rounded-md border border-gray-400 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter the AI evaluation task_prompt...">{{ old('task_prompt') }}</textarea>
+                </div>
+
+                {{-- Task Link --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Task Link</label>
                     <input type="url" name="task_link"
                         value="{{ old('task_link') }}"
                         placeholder="https://example.com/task-info"
-                        class="block w-full rounded-md border-gray-300">
+                        class="block w-full rounded-md border border-gray-400 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     @error('task_link') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                    <!-- <p class="mt-1 text-xs text-gray-500">You may upload files OR provide a link (or both).</p> -->
                 </div>
 
-
-               
-
+                {{-- Submit --}}
                 <div class="flex justify-end">
-                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
+                    <button type="submit"
+                        class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-offset-1 focus:ring-blue-600">
                         Upload
                     </button>
                 </div>
@@ -63,22 +82,18 @@
     </div>
 </div>
 
-{{-- Minimal JS for preview --}}
 <script>
-document.getElementById('task_files').addEventListener('change', function() {
-    const box = document.getElementById('file_preview');
-    const list = document.getElementById('file_list');
-    list.innerHTML = '';
-    if (this.files && this.files.length) {
-        [...this.files].forEach(f => {
-            const li = document.createElement('li');
-            li.textContent = `${f.name} (${Math.round(f.size/1024)} KB)`;
-            list.appendChild(li);
-        });
-        box.classList.remove('hidden');
+const modeEl = document.getElementById('task_mode');
+const promptWrap = document.getElementById('prompt_wrap');
+
+function togglePrompt() {
+    if (modeEl.value === 'ai') {
+        promptWrap.classList.remove('hidden');
     } else {
-        box.classList.add('hidden');
+        promptWrap.classList.add('hidden');
     }
-});
+}
+modeEl?.addEventListener('change', togglePrompt);
+togglePrompt();
 </script>
 @endsection

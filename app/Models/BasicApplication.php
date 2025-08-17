@@ -13,6 +13,12 @@ class BasicApplication extends Model
         'full_name','email','mobile','gender','location',
         'years_of_experience','current_salary','expected_salary',
         'notice_period','portfolio_link','resume_path',
-        'ai_score','ai_summary',
+        'ai_score','ai_summary', 'mail_sent',  
+         'code_zip','task_score','task_summary',
+    ];
+
+     protected $casts = [
+        'ai_score'  => 'float',
+        'mail_sent' => 'boolean',  // ← and cast it
     ];
 }

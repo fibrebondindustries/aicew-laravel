@@ -148,7 +148,7 @@ Route::get('/tasks/upload', [TaskUploadController::class, 'create'])->name('task
 Route::post('/tasks/upload', [TaskUploadController::class, 'store'])->name('tasks.upload.store');
 Route::get('/tasks/download/{id}', [TaskUploadController::class, 'download'])->name('tasks.upload.download');
 
-
+Route::get('/lookup/candidate/{candidateId}', [TaskSubmissionController::class, 'lookupByCandidate']);
 
 
 

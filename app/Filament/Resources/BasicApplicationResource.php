@@ -162,7 +162,21 @@ Tables\Columns\TextColumn::make('ai_summary')
                Tables\Columns\TextColumn::make('created_at')
                     ->label('Applied On')
                     ->sortable()
-                    ->dateTime('M j, Y H:i', timezone: 'Asia/Kolkata')
+                    ->dateTime('M j, Y H:i', timezone: 'Asia/Kolkata'),
+
+                  // Mail status badge (NEW)
+                Tables\Columns\BadgeColumn::make('mail_sent')
+                    ->label('Mail Status')
+                    ->sortable()
+                    ->getStateUsing(fn (BasicApplication $r) => $r->mail_sent ? 'Sent' : 'Not sent')
+                    ->colors([
+                        'success' => fn ($state) => $state === 'Sent',
+                        'danger'  => fn ($state) => $state === 'Not sent',
+                    ])
+                    ->icons([
+                        'heroicon-m-check-circle' => fn ($state) => $state === 'Sent',
+                        'heroicon-m-x-circle'     => fn ($state) => $state === 'Not sent',
+                    ]),  
 
             ])
             ->filters([
@@ -238,6 +252,7 @@ Tables\Columns\TextColumn::make('ai_summary')
                 ->color('success')
                 ->requiresConfirmation()
                 ->visible(fn ($record) => filled($record->email) && filled($record->job_id))
+                 ->disabled(fn (BasicApplication $r) => $r->mail_sent)   // ← prevent re-sending
                 ->action(function ($record) {
                     try {
                         $controller = app(TaskMailController::class);
@@ -276,8 +291,16 @@ Tables\Columns\TextColumn::make('ai_summary')
     $sent = 0;
     $failed = 0;
     $skipped = 0;
+     $already = 0;     // already sent
 
     foreach ($records as $record) {
+        /** @var \App\Models\BasicApplication $record */
+
+            // Skip if already mailed
+            if ($record->mail_sent) {
+                $already++;
+                continue;
+            }
         // Eligible: has email + job_id + score >= 80 (Shortlisted or Highly)
         $eligible = filled($record->email)
             && filled($record->job_id)
@@ -299,12 +322,15 @@ Tables\Columns\TextColumn::make('ai_summary')
                 'message'        => $e->getMessage(),
             ]);
         }
-    }
-
+       }
     $note = "Sent: {$sent}, Failed: {$failed}";
-    if ($skipped > 0) {
-        $note .= ", Skipped: {$skipped}";
-    }
+    if ($skipped > 0) $note .= ", Skipped: {$skipped}";
+    if ($already > 0) $note .= ", Skipped (already sent): {$already}";
+    // $note = "Sent: {$sent}, Failed: {$failed}";
+    // if ($skipped > 0) {
+    //     $note .= ", Skipped: {$skipped}";
+        
+    // }
 
     \Filament\Notifications\Notification::make()
         ->title('Bulk email completed')
