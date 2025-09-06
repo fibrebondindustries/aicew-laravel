@@ -34,6 +34,24 @@ class ResumePromptResource extends Resource
             Forms\Components\TextInput::make('title')->disabled()->dehydrated(false),
             
             Forms\Components\Textarea::make('prompt')->disabled()->dehydrated(false)->rows(10),
+
+              Forms\Components\Select::make('task_mode')
+            ->label('Task Mode')
+            ->options([
+                'ai'     => 'AI evaluate',
+                'manual' => 'Manual evaluate',
+            ])
+            ->native(false)
+            ->disabled()
+            ->dehydrated(false),
+
+        // ▼ NEW: Task Prompt (read-only)
+        Forms\Components\Textarea::make('task_prompt')
+            ->label('Task Prompt')
+            ->rows(8)
+            ->placeholder('—')
+            ->disabled()
+            ->dehydrated(false),
               // ▼ Read-only Apply URL (local → 127.0.0.1:8000, prod → FRONTEND_URL)
         Forms\Components\TextInput::make('apply_url')
             ->label('Apply URL')
@@ -48,11 +66,8 @@ class ResumePromptResource extends Resource
                 return $base . '/job-apply?job_id=' . $record->job_id;
             })
             ->helperText('Share this link with candidates to apply directly for this Job ID.'),
-                Forms\Components\Toggle::make('is_active')
-                ->label('Active')
-                ->helperText('Inactive records will be hidden from use.')
-                ->disabled()
-                ->dehydrated(false),
+               
+            
 
     ])->columns(2);
         
@@ -136,6 +151,28 @@ public static function table(Table $table): Table
                 ->label('Prompt (preview)')
                 ->toggleable()
                 ->limit(80),
+
+                  Tables\Columns\BadgeColumn::make('task_mode')
+        ->label('Task Mode')
+        ->colors([
+            'info'  => fn ($state) => $state === 'ai',
+            'gray'  => fn ($state) => $state === 'manual',
+        ])
+        ->icons([
+            'heroicon-m-cpu-chip'    => fn ($state) => $state === 'ai',
+            'heroicon-m-hand-raised' => fn ($state) => $state === 'manual',
+        ])
+        ->formatStateUsing(function ($state) {
+            return $state === 'ai' ? 'AI evaluate' : 'Manual evaluate';
+        })
+        ->sortable(),
+
+    // ▼ NEW: Task Prompt preview
+    Tables\Columns\TextColumn::make('task_prompt')
+        ->label('Task Prompt')
+        ->toggleable()
+        ->wrap()
+        ->limit(80),
 
                 // Files count badge
             // Tables\Columns\TextColumn::make('filesCount')

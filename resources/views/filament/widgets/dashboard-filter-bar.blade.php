@@ -1,3 +1,17 @@
+@php
+    // Base URL: local vs prod
+    $base = app()->environment('local')
+        ? 'http://127.0.0.1:8000'
+        : rtrim(env('FRONTEND_URL', config('app.url')), '/');
+
+    // Static links
+    $taskUploadUrl = $base . '/tasks/upload';
+    $jobPromptUrl  = $base . '/resume/prompt';
+
+   
+@endphp
+
+
 <div class="mb-4">
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
 
@@ -53,5 +67,25 @@
             </div>
         </div>
 
+    </div>
+
+    {{-- Quick actions row --}}
+    <div class="mt-3 flex flex-wrap gap-2">
+        {{-- Apply to Job (enabled only when Job ID is set) --}}
+      
+
+        {{-- Task Upload --}}
+        <a href="{{ $taskUploadUrl }}" target="_blank" rel="noopener"
+           class="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium
+                  hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            Task Upload
+        </a>
+
+        {{-- Job Prompt Post --}}   
+        <a href="{{ $jobPromptUrl }}" target="_blank" rel="noopener"
+           class="inline-flex items-center rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium
+                  hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            Resume  Prompt
+        </a>
     </div>
 </div>

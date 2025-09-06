@@ -22,7 +22,7 @@ class TaskSubmissionController extends Controller
         ]);
 
         // Candidate must exist
-        $candidate = Candidate::where('candidate_id', $request->candidate_id)->first();
+        $candidate = BasicApplication::where('candidate_id', $request->candidate_id)->first();
         if (!$candidate) {
             return back()->withErrors([
                 'candidate_id' => 'Invalid Candidate ID. Please check and try again.',

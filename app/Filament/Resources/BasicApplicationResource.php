@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Http\Controllers\TaskMailController;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Collection;
-
+use Illuminate\Support\HtmlString;
 
 class BasicApplicationResource extends Resource
 {
@@ -77,9 +77,45 @@ class BasicApplicationResource extends Resource
                     ->label('Summary')
                     ->rows(6)
                     ->disabled()->dehydrated(false),
-            ])
-            ->collapsible()
-            ->columns(1),
+            ]),
+         // NEW: Task Evaluation (from candidate submission)
+            Forms\Components\Section::make('Task Evaluation')
+                ->schema([
+                    Forms\Components\Grid::make(3)->schema([
+                        Forms\Components\TextInput::make('task_score')
+                            ->label('Task Score')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->formatStateUsing(fn ($state) => is_null($state) ? null : (string)$state),
+
+                        // Download link to submitted ZIP (shown only if present)
+                      Forms\Components\Placeholder::make('code_zip_link')
+    ->label('Submitted ZIP')
+    ->content(function (?BasicApplication $record) {
+        if (! $record || blank($record->code_zip)) {
+            return new HtmlString('—');
+        }
+
+        $url  = Storage::url($record->code_zip);
+        $name = e(basename($record->code_zip));
+
+        // Render as a real link
+        return new HtmlString(
+            '<a href="'.$url.'" target="_blank" rel="noopener" class="text-primary-600 underline">'
+            .$name.
+            '</a>'
+        );
+    })
+                            // ->hint('Opens in a new tab.'),
+                    ]),
+                    Forms\Components\Textarea::make('task_summary')
+                        ->label('Task Summary')
+                        ->rows(6)
+                        ->disabled()
+                        ->dehydrated(false),
+                ])
+                ->collapsed() // keep the form tidy
+                ->columns(1),
 
     
 
@@ -158,6 +194,34 @@ Tables\Columns\TextColumn::make('ai_summary')
     ->label('AI Summary')
     ->limit(80)
     ->tooltip(fn ($record) => $record->ai_summary),
+
+      // NEW: Task columns
+            // REPLACE your current task_score column with this:
+            Tables\Columns\BadgeColumn::make('task_score')
+                ->label('Task Score')
+                ->sortable()
+                ->formatStateUsing(fn ($state) => is_null($state) ? '—' : (string) $state)
+                ->colors([
+                    'gray'    => fn ($state): bool => is_null($state),
+                    'success' => fn ($state): bool => is_numeric($state) && $state >= 80,
+                    'warning' => fn ($state): bool => is_numeric($state) && $state < 80,
+                ]),
+
+                Tables\Columns\TextColumn::make('task_summary')
+                    ->label('Task Summary')
+                    ->limit(80)
+                    ->tooltip(fn ($record) => $record->task_summary),
+
+                Tables\Columns\TextColumn::make('code_zip')
+                    ->label('Task ZIP')
+                    ->formatStateUsing(fn (BasicApplication $r) =>
+                        $r->code_zip ? basename($r->code_zip) : '—'
+                    )
+                    ->url(fn (BasicApplication $r) =>
+                        $r->code_zip ? Storage::url($r->code_zip) : null,
+                        shouldOpenInNewTab: true
+                    )
+                    ->toggleable(),
 
                Tables\Columns\TextColumn::make('created_at')
                     ->label('Applied On')
