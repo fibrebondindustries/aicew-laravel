@@ -395,6 +395,11 @@ class ResumePromptResource extends Resource
             ->label('Task Prompt')
             ->rows(8)
             ->placeholder('—'),
+
+        Forms\Components\Textarea::make('task_link')
+            ->label('Task Link')
+            ->rows(8)
+            ->placeholder('—'), 
               // ▼ Read-only Apply URL (local → 127.0.0.1:8000, prod → FRONTEND_URL)
         Forms\Components\TextInput::make('apply_url')
             ->label('Apply URL')

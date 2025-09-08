@@ -343,125 +343,253 @@ Tables\Columns\TextColumn::make('ai_summary')
                 Tables\Actions\BulkActionGroup::make([
 
                      // (NEW) Bulk Send Mail
-                     Tables\Actions\BulkAction::make('send_task_mail_bulk')
-    ->label('Send Mail')
-    ->icon('heroicon-o-paper-airplane')
-    ->color('success')
-    ->requiresConfirmation()
-    ->deselectRecordsAfterCompletion()
-    // Show only when Status filter is Shortlisted or Highly recommended
-    ->visible(fn () => true) 
-    ->action(function (\Illuminate\Support\Collection $records): void {
-    $controller = app(\App\Http\Controllers\TaskMailController::class);
+            //     Tables\Actions\BulkAction::make('send_task_mail_bulk')
+            //     ->label('Send Mail')
+            //     ->icon('heroicon-o-paper-airplane')
+            //     ->color('success')
+            //     ->requiresConfirmation()
+            //     ->deselectRecordsAfterCompletion()
+            //     // Show only when Status filter is Shortlisted or Highly recommended
+            //     ->visible(fn () => true) 
+            //     ->action(function (\Illuminate\Support\Collection $records): void {
+            //     $controller = app(\App\Http\Controllers\TaskMailController::class);
 
-    $sent = 0;
-    $failed = 0;
-    $skipped = 0;
-     $already = 0;     // already sent
+            //     $sent = 0;
+            //     $failed = 0;
+            //     // $skipped = 0;
+            //     $already = 0;     // already sent
 
-    foreach ($records as $record) {
-        /** @var \App\Models\BasicApplication $record */
+            //     foreach ($records as $record) {
+            //         /** @var \App\Models\BasicApplication $record */
 
-            // Skip if already mailed
-            if ($record->mail_sent) {
-                $already++;
-                continue;
-            }
-        // Eligible: has email + job_id + score >= 80 (Shortlisted or Highly)
-        $eligible = filled($record->email)
-            && filled($record->job_id)
-            && !is_null($record->ai_score)
-            && $record->ai_score >= 80;
+            //             // Skip if already mailed
+            //             if ($record->mail_sent) {
+            //                 $already++;
+            //                 continue;
+            //             }
+            //         // Eligible: has email + job_id + score >= 80 (Shortlisted or Highly)
+            //         $eligible = filled($record->email)
+            //             && filled($record->job_id)
+            //             && !is_null($record->ai_score)
+            //             && $record->ai_score >= 80;
 
-        if (! $eligible) {
-            $skipped++;
-            continue;
-        }
+            //         if (! $eligible) {
+            //             $skipped++;
+            //             continue;
+            //         }
 
-        try {
-            $controller->sendByApplication($record);
-            $sent++;
-        } catch (\Throwable $e) {
-            $failed++;
-            \Log::warning('Bulk send failed', [
-                'application_id' => $record->id,
-                'message'        => $e->getMessage(),
-            ]);
-        }
-       }
-    $note = "Sent: {$sent}, Failed: {$failed}";
-    if ($skipped > 0) $note .= ", Skipped: {$skipped}";
-    if ($already > 0) $note .= ", Skipped (already sent): {$already}";
-    // $note = "Sent: {$sent}, Failed: {$failed}";
-    // if ($skipped > 0) {
-    //     $note .= ", Skipped: {$skipped}";
-        
-    // }
+            //         try {
+            //             $controller->sendByApplication($record);
+            //             $sent++;
+            //         } catch (\Throwable $e) {
+            //             $failed++;
+            //             \Log::warning('Bulk send failed', [
+            //                 'application_id' => $record->id,
+            //                 'message'        => $e->getMessage(),
+            //             ]);
+            //         }
+            //     }
+            //     $note = "Sent: {$sent}, Failed: {$failed}";
+            //     if ($skipped > 0) $note .= ", Skipped: {$skipped}";
+            //     if ($already > 0) $note .= ", Skipped (already sent): {$already}";
+            
 
-    \Filament\Notifications\Notification::make()
-        ->title('Bulk email completed')
-        ->body($note)
-        ->{ $failed ? 'warning' : 'success' }()
-        ->send();
-}),
-Tables\Actions\BulkAction::make('download_resumes')
-    ->label('Download Resumes')
-    ->icon('heroicon-o-archive-box-arrow-down')
-    ->color('gray')
-    ->requiresConfirmation()
-    ->deselectRecordsAfterCompletion()
-    ->action(function (Collection $records) {
-        // Where to build the temp zip
-        $fileName = 'resumes_' . now()->format('Ymd_His') . '.zip';
-        $tmpDir   = storage_path('app/tmp');
-        $zipPath  = $tmpDir . '/' . $fileName;
+            //     \Filament\Notifications\Notification::make()
+            //         ->title('Bulk email completed')
+            //         ->body($note)
+            //         ->{ $failed ? 'warning' : 'success' }()
+            //         ->send();
+            // }),
 
-        if (! is_dir($tmpDir)) {
-            @mkdir($tmpDir, 0775, true);
-        }
 
-        $zip = new ZipArchive();
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-            throw new \RuntimeException('Could not create ZIP archive.');
-        }
+            Tables\Actions\BulkAction::make('send_task_mail_bulk')
+                ->label('Send Mail')
+                ->icon('heroicon-o-paper-airplane')
+                ->color('success')
+                ->requiresConfirmation()
+                ->deselectRecordsAfterCompletion()
+                ->visible(fn () => true)
+                ->action(function (\Illuminate\Support\Collection $records): void {
+                    $controller = app(\App\Http\Controllers\TaskMailController::class);
 
-        $added = 0;
+                    $sent    = 0;
+                    $failed  = 0;
+                    $already = 0;
 
-        /** @var \App\Models\BasicApplication $record */
-        foreach ($records as $record) {
-            if (blank($record->resume_path)) {
-                continue;
-            }
+                    /** @var \App\Models\BasicApplication $record */
+                    foreach ($records as $record) {
+                        // Skip if already mailed
+                        if ($record->mail_sent) {
+                            $already++;
+                            continue;
+                        }
 
-            $abs = Storage::disk('public')->path($record->resume_path);
-            if (! file_exists($abs)) {
-                continue;
-            }
+                        try {
+                            // Send regardless of shortlist status or score
+                            $controller->sendByApplication($record);
+                            $sent++;
+                        } catch (\Throwable $e) {
+                            $failed++;
+                            \Log::warning('Bulk send failed', [
+                                'application_id' => $record->id,
+                                'message'        => $e->getMessage(),
+                            ]);
+                        }
+                    }
 
-            // Nice file name in the zip, e.g. "FBI114_Yogesh.pdf"
-            $ext      = pathinfo($abs, PATHINFO_EXTENSION);
-            $safeName = ($record->candidate_id ? $record->candidate_id . '_' : '')
-                      . Str::slug($record->full_name ?: 'candidate');
-            $zip->addFile($abs, $safeName . '.' . $ext);
-            $added++;
-        }
+                    $note = "Sent: {$sent}";
+                    if ($failed > 0)  { $note .= ", Failed: {$failed}"; }
+                    if ($already > 0) { $note .= ", Skipped (already sent): {$already}"; }
 
-        $zip->close();
+                    // Safer Notification (no dynamic method call)
+                    $notif = \Filament\Notifications\Notification::make()
+                        ->title('Bulk email completed')
+                        ->body($note);
 
-        if ($added === 0) {
-            @unlink($zipPath);
+                    if ($failed > 0) {
+                        $notif->warning();
+                    } else {
+                        $notif->success();
+                    }
 
-            \Filament\Notifications\Notification::make()
-                ->title('No resumes found to download.')
-                ->warning()
-                ->send();
+                    $notif->send();
+                }),
 
-            return;
-        }
+            // Tables\Actions\BulkAction::make('download_resumes')
+            //     ->label('Download Resumes')
+            //     ->icon('heroicon-o-archive-box-arrow-down')
+            //     ->color('gray')
+            //     ->requiresConfirmation()
+            //     ->deselectRecordsAfterCompletion()
+            //     ->action(function (Collection $records) {
+            //         // Where to build the temp zip
+            //         $fileName = 'resumes_' . now()->format('Ymd_His') . '.zip';
+            //         $tmpDir   = storage_path('app/tmp');
+            //         $zipPath  = $tmpDir . '/' . $fileName;
 
-        // Stream the zip and remove after send
-        return response()->download($zipPath, $fileName)->deleteFileAfterSend(true);
-    }),
+            //         if (! is_dir($tmpDir)) {
+            //             @mkdir($tmpDir, 0775, true);
+            //         }
+
+            //         $zip = new ZipArchive();
+            //         if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            //             throw new \RuntimeException('Could not create ZIP archive.');
+            //         }
+
+            //         $added = 0;
+
+            //         /** @var \App\Models\BasicApplication $record */
+            //         foreach ($records as $record) {
+            //             if (blank($record->resume_path)) {
+            //                 continue;
+            //             }
+
+            //             $abs = Storage::disk('public')->path($record->resume_path);
+            //             if (! file_exists($abs)) {
+            //                 continue;
+            //             }
+
+            //             // Nice file name in the zip, e.g. "FBI114_Yogesh.pdf"
+            //             $ext      = pathinfo($abs, PATHINFO_EXTENSION);
+            //             $safeName = ($record->candidate_id ? $record->candidate_id . '_' : '')
+            //                     . Str::slug($record->full_name ?: 'candidate');
+            //             $zip->addFile($abs, $safeName . '.' . $ext);
+            //             $added++;
+            //         }
+
+            //         $zip->close();
+
+            //         if ($added === 0) {
+            //             @unlink($zipPath);
+
+            //             \Filament\Notifications\Notification::make()
+            //                 ->title('No resumes found to download.')
+            //                 ->warning()
+            //                 ->send();
+
+            //             return;
+            //         }
+
+            //         // Stream the zip and remove after send
+            //         return response()->download($zipPath, $fileName)->deleteFileAfterSend(true);
+            //     }),
+
+            Tables\Actions\BulkAction::make('download_resumes')
+            ->label('Download Resumes')
+            ->icon('heroicon-o-archive-box-arrow-down')
+            ->color('gray')
+            ->requiresConfirmation()
+            ->deselectRecordsAfterCompletion()
+            ->action(function (\Illuminate\Support\Collection $records) {
+                // Lift limits for large batches
+                @set_time_limit(0);
+                @ini_set('memory_limit', '1024M');
+                @ignore_user_abort(true);
+
+                $fileName = 'resumes_' . now()->format('Ymd_His') . '.zip';
+                $tmpDir   = storage_path('app/tmp');
+                $zipPath  = $tmpDir . '/' . $fileName;
+
+                if (! is_dir($tmpDir)) {
+                    @mkdir($tmpDir, 0775, true);
+                }
+
+                $zip = new \ZipArchive();
+                if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+                    throw new \RuntimeException('Could not create ZIP archive.');
+                }
+
+                $added = 0;
+
+                /** @var \App\Models\BasicApplication $record */
+                foreach ($records as $record) {
+                    $path = $record->resume_path;
+                    if (blank($path)) {
+                        continue;
+                    }
+
+                    // Works even if public disk is S3; we don’t rely on a local path
+                    if (! \Storage::disk('public')->exists($path)) {
+                        continue;
+                    }
+
+                    $stream = \Storage::disk('public')->readStream($path);
+                    if ($stream === false) {
+                        continue;
+                    }
+
+                    $ext      = pathinfo($path, PATHINFO_EXTENSION);
+                    $safeName = ($record->candidate_id ? $record->candidate_id . '_' : '')
+                            . \Illuminate\Support\Str::slug($record->full_name ?: 'candidate');
+
+                    // Read stream into zip without loading entire file list into memory
+                    $zip->addFromString($safeName . '.' . $ext, stream_get_contents($stream) ?: '');
+                    fclose($stream);
+
+                    $added++;
+
+                    // Yield periodically to avoid timeouts on some stacks
+                    if (($added % 50) === 0) {
+                        usleep(1); // tiny yield
+                        clearstatcache();
+                    }
+                }
+
+                $zip->close();
+
+                if ($added === 0) {
+                    @unlink($zipPath);
+                    \Filament\Notifications\Notification::make()
+                        ->title('No resumes found to download.')
+                        ->warning()
+                        ->send();
+                    return;
+                }
+
+                // Stream file to the browser and delete after send
+                return response()->download($zipPath, $fileName)->deleteFileAfterSend(true);
+            }),
+
 
       
                   Tables\Actions\DeleteBulkAction::make(),

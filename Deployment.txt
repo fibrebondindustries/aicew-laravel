@@ -39,3 +39,21 @@ sudo -u www php artisan cache:clear
 sudo -u www php artisan view:clear
 
 sudo -u www composer dump-autoload -o
+
+
+Create New Admin 
+cd /www/wwwroot/careers.fibrebondindustries.com
+php artisan tinker
+
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+
+$user = User::updateOrCreate(
+    ['email' => 'faisalkhan@admin.com'],
+    [
+        'name' => 'Faisal khan',
+        'password' => Hash::make('Fbi@2025'),
+        'email_verified_at' => now(),
+    ]
+);
+$user->id;
