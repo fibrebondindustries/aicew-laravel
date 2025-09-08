@@ -18,6 +18,8 @@ use App\Http\Controllers\TaskMailController;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
+use ZipArchive;
 
 class BasicApplicationResource extends Resource
 {
@@ -402,41 +404,66 @@ Tables\Columns\TextColumn::make('ai_summary')
         ->{ $failed ? 'warning' : 'success' }()
         ->send();
 }),
+Tables\Actions\BulkAction::make('download_resumes')
+    ->label('Download Resumes')
+    ->icon('heroicon-o-archive-box-arrow-down')
+    ->color('gray')
+    ->requiresConfirmation()
+    ->deselectRecordsAfterCompletion()
+    ->action(function (Collection $records) {
+        // Where to build the temp zip
+        $fileName = 'resumes_' . now()->format('Ymd_His') . '.zip';
+        $tmpDir   = storage_path('app/tmp');
+        $zipPath  = $tmpDir . '/' . $fileName;
 
+        if (! is_dir($tmpDir)) {
+            @mkdir($tmpDir, 0775, true);
+        }
 
-        // Tables\Actions\BulkAction::make('send_task_mail_bulk')
-        //     ->label('Send Mail')
-        //     ->icon('heroicon-o-paper-airplane')
-        //     ->color('success')
-        //     ->requiresConfirmation()
-        //     ->deselectRecordsAfterCompletion()
-        //     ->action(function (Collection $records): void {
-        //         $sent  = 0;
-        //         $failed = 0;
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            throw new \RuntimeException('Could not create ZIP archive.');
+        }
 
-        //         /** @var \App\Http\Controllers\TaskMailController $controller */
-        //         $controller = app(TaskMailController::class);
+        $added = 0;
 
-        //         foreach ($records as $record) {
-        //             try {
-        //                 $controller->sendByApplication($record);
-        //                 $sent++;
-        //             } catch (\Throwable $e) {
-        //                 $failed++;
-        //                 \Log::warning('Bulk send failed', [
-        //                     'application_id' => $record->id,
-        //                     'message'        => $e->getMessage(),
-        //                 ]);
-        //             }
-        //         }
+        /** @var \App\Models\BasicApplication $record */
+        foreach ($records as $record) {
+            if (blank($record->resume_path)) {
+                continue;
+            }
 
-        //         Notification::make()
-        //             ->title('Bulk email completed')
-        //             ->body("Sent: {$sent}, Failed: {$failed}")
-        //             ->{ $failed ? 'warning' : 'success' }()
-        //             ->send();
-        //     }),
-            
+            $abs = Storage::disk('public')->path($record->resume_path);
+            if (! file_exists($abs)) {
+                continue;
+            }
+
+            // Nice file name in the zip, e.g. "FBI114_Yogesh.pdf"
+            $ext      = pathinfo($abs, PATHINFO_EXTENSION);
+            $safeName = ($record->candidate_id ? $record->candidate_id . '_' : '')
+                      . Str::slug($record->full_name ?: 'candidate');
+            $zip->addFile($abs, $safeName . '.' . $ext);
+            $added++;
+        }
+
+        $zip->close();
+
+        if ($added === 0) {
+            @unlink($zipPath);
+
+            \Filament\Notifications\Notification::make()
+                ->title('No resumes found to download.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        // Stream the zip and remove after send
+        return response()->download($zipPath, $fileName)->deleteFileAfterSend(true);
+    }),
+
+      
                   Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])

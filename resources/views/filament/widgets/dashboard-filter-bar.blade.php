@@ -22,9 +22,10 @@
             </label>
             <select
                 wire:model.live="filter_job_role"
-                class="fi-input block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm
-                       text-gray-900 placeholder-gray-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500
-                       dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/50">
+                class="fi-input block w-full rounded-lg border px-3 py-2 text-sm
+                    text-gray-900 bg-white border-gray-300
+                    focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500
+                    dark:text-gray-100 dark:bg-gray-800 dark:border-gray-600">
                 <option value="">All</option>
                 @foreach($this->getJobRoleOptions() as $value => $label)
                     <option value="{{ $value }}">{{ $label }}</option>
