@@ -158,9 +158,17 @@ class BasicApplicationController extends Controller
 
     public function store(Request $request)
 {
+     // Normalize email to lowercase to avoid case-sensitive duplicates
+    if ($request->filled('email')) {
+        $request->merge(['email' => mb_strtolower($request->input('email'))]);
+    }
     $validated = $request->validate([
         'full_name'           => ['required','string','max:120'],
-        'email'               => ['required','email','max:150'],
+       'email'               => [
+            'required','email','max:150',
+            // Block re-submission by email (global across all jobs)
+            Rule::unique('basic_applications', 'email'),
+        ],
         'mobile'              => ['required','string','max:20'],
         'gender'              => ['nullable','string','max:20'],
         'location'            => ['nullable','string','max:150'],
@@ -171,6 +179,9 @@ class BasicApplicationController extends Controller
         'portfolio_link'      => ['nullable','url','max:255'],
         'resume'              => ['required','file','mimes:pdf,doc,docx','max:5120'],
         'job_id'              => ['nullable','string','max:50'],
+        ], [
+        // Custom error message (nice UX)
+        'email.unique' => 'An application has already been submitted with this email address.',
     ]);
 
     // === Get job role & prompt (safe defaults) ===

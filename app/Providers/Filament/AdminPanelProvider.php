@@ -38,7 +38,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('AICEW Admin')
             // ->brandLogo(asset('images/logo.svg'))
           ->brandLogo(new \Illuminate\Support\HtmlString(
-    '<img src="' . asset('images/Gold-logo.png') . '" alt="Fibre Bond Industries" style="width: 108px; height: 96px; margin-top: -36px; " />'
+    '<img src="' . asset('images/goldlogo.png') . '" alt="Fibre Bond Industries" style="width: 108px; height: 96px; margin-top: -36px; " />'
 ))
 
 

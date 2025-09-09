@@ -13,7 +13,7 @@
         <div class="px-6 py-6">
             @if ($errors->any())
                 <div class="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
-                    <div class="font-medium mb-1">There were some problems with your submission:</div>
+                    <div class="font-medium mb-1">Application could not be submitted:</div>
                     <ul class="list-disc pl-5 space-y-1">
                         @foreach ($errors->all() as $err)
                             <li>{{ $err }}</li>
